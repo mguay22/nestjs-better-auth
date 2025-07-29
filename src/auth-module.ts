@@ -215,10 +215,7 @@ export class AuthModule implements NestModule, OnModuleInit {
 	 * @param auth - The Auth instance to use
 	 * @param options - Configuration options for the module
 	 */
-	static forRoot(
-		auth: Auth,
-		options: AuthModuleOptions = {},
-	): DynamicModule {
+	static forRoot(auth: Auth, options: AuthModuleOptions = {}): DynamicModule {
 		// Initialize hooks with an empty object if undefined
 		// Without this initialization, the setupHook method won't be able to properly override hooks
 		// It won't throw an error, but any hook functions we try to add won't be called
