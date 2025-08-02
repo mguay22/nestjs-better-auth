@@ -8,16 +8,16 @@ Install the library in your NestJS project:
 
 ```bash
 # Using npm
-npm install @mguay/nestjs-better-auth
+npm install @thallesp/nestjs-better-auth
 
 # Using yarn
-yarn add @mguay/nestjs-better-auth
+yarn add @thallesp/nestjs-better-auth
 
 # Using pnpm
-pnpm add @mguay/nestjs-better-auth
+pnpm add @thallesp/nestjs-better-auth
 
 # Using bun
-bun add @mguay/nestjs-better-auth
+bun add @thallesp/nestjs-better-auth
 ```
 
 ## Prerequisites
@@ -56,7 +56,7 @@ Import the `AuthModule` in your root module:
 
 ```ts title="app.module.ts"
 import { Module } from "@nestjs/common";
-import { AuthModule } from "@mguay/nestjs-better-auth";
+import { AuthModule } from "@thallesp/nestjs-better-auth";
 import { auth } from "./auth";
 
 @Module({
@@ -75,7 +75,7 @@ Apply the guard to specific controllers or routes:
 
 ```ts title="app.controller.ts"
 import { Controller, Get, UseGuards } from "@nestjs/common";
-import { AuthGuard } from "@mguay/nestjs-better-auth";
+import { AuthGuard } from "@thallesp/nestjs-better-auth";
 
 @Controller("users")
 @UseGuards(AuthGuard) // Apply to all routes in this controller
@@ -94,7 +94,7 @@ Alternatively, you can register the guard globally using `APP_GUARD` to protect 
 ```ts title="app.module.ts"
 import { Module } from "@nestjs/common";
 import { APP_GUARD } from "@nestjs/core";
-import { AuthModule, AuthGuard } from "@mguay/nestjs-better-auth";
+import { AuthModule, AuthGuard } from "@thallesp/nestjs-better-auth";
 import { auth } from "./auth";
 
 @Module({
@@ -122,7 +122,7 @@ Access the user session in your controllers:
 
 ```ts title="user.controller.ts"
 import { Controller, Get } from "@nestjs/common";
-import { Session, UserSession } from "@mguay/nestjs-better-auth";
+import { Session, UserSession } from "@thallesp/nestjs-better-auth";
 
 @Controller("users")
 export class UserController {
@@ -139,7 +139,7 @@ Control authentication requirements for specific routes:
 
 ```ts title="app.controller.ts"
 import { Controller, Get } from "@nestjs/common";
-import { Public, Optional } from "@mguay/nestjs-better-auth";
+import { Public, Optional } from "@thallesp/nestjs-better-auth";
 
 @Controller("users")
 export class UserController {
@@ -161,7 +161,7 @@ Alternatively, use it as a class decorator to specify access for an entire contr
 
 ```ts title="app.controller.ts"
 import { Controller, Get } from "@nestjs/common";
-import { Public, Optional } from "@mguay/nestjs-better-auth";
+import { Public, Optional } from "@thallesp/nestjs-better-auth";
 
 @Public() // All routes inside this controller are public
 @Controller("public")
@@ -182,7 +182,11 @@ Create custom hooks that integrate with NestJS's dependency injection:
 
 ```ts title="hooks/sign-up.hook.ts"
 import { Injectable } from "@nestjs/common";
-import { BeforeHook, Hook, AuthHookContext } from "@mguay/nestjs-better-auth";
+import {
+  BeforeHook,
+  Hook,
+  AuthHookContext,
+} from "@thallesp/nestjs-better-auth";
 import { SignUpService } from "./sign-up.service";
 
 @Hook()
@@ -203,7 +207,7 @@ Register your hooks in a module:
 
 ```ts title="app.module.ts"
 import { Module } from "@nestjs/common";
-import { AuthModule } from "@mguay/nestjs-better-auth";
+import { AuthModule } from "@thallesp/nestjs-better-auth";
 import { SignUpHook } from "./hooks/sign-up.hook";
 import { SignUpService } from "./sign-up.service";
 import { auth } from "./auth";
@@ -228,7 +232,7 @@ import {
   Body,
   UseGuards,
 } from "@nestjs/common";
-import { AuthGuard, AuthService } from "@mguay/nestjs-better-auth";
+import { AuthGuard, AuthService } from "@thallesp/nestjs-better-auth";
 import { fromNodeHeaders } from "better-auth/node";
 import type { Request as ExpressRequest } from "express";
 import { auth } from "../auth";
