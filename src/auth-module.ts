@@ -314,12 +314,9 @@ export class AuthModule implements NestModule, OnModuleInit {
 						const auth = result.auth;
 
 						// Initialize hooks with an empty object if undefined
-						// Handle both auth.hooks and auth.options.hooks for compatibility
-						if (auth.hooks !== undefined) {
-							auth.hooks = { ...auth.hooks };
-						} else if (auth.options) {
-							auth.options.hooks = { ...auth.options.hooks };
-						}
+						auth.options.hooks = {
+							...auth.options.hooks,
+						};
 
 						return auth;
 					},
@@ -362,12 +359,9 @@ export class AuthModule implements NestModule, OnModuleInit {
 						const auth = result.auth;
 
 						// Initialize hooks with an empty object if undefined
-						// Handle both auth.hooks and auth.options.hooks for compatibility
-						if (auth.hooks !== undefined) {
-							auth.hooks = { ...auth.hooks };
-						} else if (auth.options) {
-							auth.options.hooks = { ...auth.options.hooks };
-						}
+						auth.options.hooks = {
+							...auth.options.hooks,
+						};
 
 						return auth;
 					},
@@ -418,12 +412,9 @@ export class AuthModule implements NestModule, OnModuleInit {
 						const auth = result.auth;
 
 						// Initialize hooks with an empty object if undefined
-						// Handle both auth.hooks and auth.options.hooks for compatibility
-						if (auth.hooks !== undefined) {
-							auth.hooks = { ...auth.hooks };
-						} else if (auth.options) {
-							auth.options.hooks = { ...auth.options.hooks };
-						}
+						auth.options.hooks = {
+							...auth.options.hooks,
+						};
 
 						return auth;
 					},
