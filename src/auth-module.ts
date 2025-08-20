@@ -15,6 +15,7 @@ import {
 	HttpAdapterHost,
 	MetadataScanner,
 } from "@nestjs/core";
+import type { Auth } from "better-auth";
 import { toNodeHandler } from "better-auth/node";
 import { createAuthMiddleware } from "better-auth/plugins";
 import type { Request, Response } from "express";
@@ -48,10 +49,12 @@ export interface AuthModuleAsyncOptions
 	 */
 	useFactory: (...args: unknown[]) =>
 		| Promise<{
+				// biome-ignore lint/suspicious/noExplicitAny: TODO replace with auth type
 				auth: any;
 				options?: AuthModuleOptions;
 		  }>
 		| {
+				// biome-ignore lint/suspicious/noExplicitAny: TODO replace with auth type
 				auth: any;
 				options?: AuthModuleOptions;
 		  };
@@ -65,10 +68,12 @@ export interface AuthModuleAsyncOptions
 	useClass?: Type<{
 		createAuthOptions():
 			| Promise<{
+					// biome-ignore lint/suspicious/noExplicitAny: TODO replace with auth type
 					auth: any;
 					options?: AuthModuleOptions;
 			  }>
 			| {
+					// biome-ignore lint/suspicious/noExplicitAny: TODO replace with auth type
 					auth: any;
 					options?: AuthModuleOptions;
 			  };
@@ -79,10 +84,12 @@ export interface AuthModuleAsyncOptions
 	useExisting?: Type<{
 		createAuthOptions():
 			| Promise<{
+					// biome-ignore lint/suspicious/noExplicitAny: TODO replace with auth type
 					auth: any;
 					options?: AuthModuleOptions;
 			  }>
 			| {
+					// biome-ignore lint/suspicious/noExplicitAny: TODO replace with auth type
 					auth: any;
 					options?: AuthModuleOptions;
 			  };
@@ -104,7 +111,7 @@ const HOOKS = [
 export class AuthModule implements NestModule, OnModuleInit {
 	private readonly logger = new Logger(AuthModule.name);
 	constructor(
-		@Inject(AUTH_INSTANCE_KEY) private readonly auth: any,
+		@Inject(AUTH_INSTANCE_KEY) private readonly auth: Auth,
 		@Inject(DiscoveryService)
 		private readonly discoveryService: DiscoveryService,
 		@Inject(MetadataScanner)
@@ -116,9 +123,8 @@ export class AuthModule implements NestModule, OnModuleInit {
 	) {}
 
 	onModuleInit(): void {
-		// Setup hooks - handle both auth.hooks and auth.options.hooks for compatibility
-		const hooks = this.auth.hooks || this.auth.options?.hooks;
-		if (!hooks) return;
+		// Setup hooks
+		if (!this.auth.options.hooks) return;
 
 		const providers = this.discoveryService
 			.getProviders()
@@ -191,16 +197,14 @@ export class AuthModule implements NestModule, OnModuleInit {
 		providerMethod: (...args: unknown[]) => unknown,
 		providerClass: { new (...args: unknown[]): unknown },
 	) {
-		// Handle both auth.hooks and auth.options.hooks for compatibility
-		const hooks = this.auth.hooks || this.auth.options?.hooks;
-		if (!hooks) return;
+		if (!this.auth.options.hooks) return;
 
 		for (const { metadataKey, hookType } of HOOKS) {
 			const hookPath = Reflect.getMetadata(metadataKey, providerMethod);
 			if (!hookPath) continue;
 
-			const originalHook = hooks[hookType];
-			hooks[hookType] = createAuthMiddleware(async (ctx) => {
+			const originalHook = this.auth.options.hooks[hookType];
+			this.auth.options.hooks[hookType] = createAuthMiddleware(async (ctx) => {
 				if (originalHook) {
 					await originalHook(ctx);
 				}
@@ -217,14 +221,17 @@ export class AuthModule implements NestModule, OnModuleInit {
 	 * @param auth - The Auth instance to use
 	 * @param options - Configuration options for the module
 	 */
-	static forRoot(auth: any, options: AuthModuleOptions = {}): DynamicModule {
+	static forRoot(
+		// biome-ignore lint/suspicious/noExplicitAny: TODO replace with auth type
+		auth: any,
+		options: AuthModuleOptions = {},
+	): DynamicModule {
 		// Initialize hooks with an empty object if undefined
-		// Handle both auth.hooks and auth.options.hooks for compatibility
-		if (auth.hooks !== undefined) {
-			auth.hooks = { ...auth.hooks };
-		} else if (auth.options) {
-			auth.options.hooks = { ...auth.options.hooks };
-		}
+		// Without this initialization, the setupHook method won't be able to properly override hooks
+		// It won't throw an error, but any hook functions we try to add won't be called
+		auth.options.hooks = {
+			...auth.options.hooks,
+		};
 
 		const providers: Provider[] = [
 			{
@@ -340,8 +347,16 @@ export class AuthModule implements NestModule, OnModuleInit {
 					provide: AUTH_INSTANCE_KEY,
 					useFactory: async (configService: {
 						createAuthOptions():
-							| Promise<{ auth: any; options?: AuthModuleOptions }>
-							| { auth: any; options?: AuthModuleOptions };
+							| Promise<{
+									// biome-ignore lint/suspicious/noExplicitAny: TODO replace with auth type
+									auth: any;
+									options?: AuthModuleOptions;
+							  }>
+							| {
+									// biome-ignore lint/suspicious/noExplicitAny: TODO replace with auth type
+									auth: any;
+									options?: AuthModuleOptions;
+							  };
 					}) => {
 						const result = await configService.createAuthOptions();
 						const auth = result.auth;
@@ -362,8 +377,16 @@ export class AuthModule implements NestModule, OnModuleInit {
 					provide: AUTH_MODULE_OPTIONS_KEY,
 					useFactory: async (configService: {
 						createAuthOptions():
-							| Promise<{ auth: any; options?: AuthModuleOptions }>
-							| { auth: any; options?: AuthModuleOptions };
+							| Promise<{
+									// biome-ignore lint/suspicious/noExplicitAny: TODO replace with auth type
+									auth: any;
+									options?: AuthModuleOptions;
+							  }>
+							| {
+									// biome-ignore lint/suspicious/noExplicitAny: TODO replace with auth type
+									auth: any;
+									options?: AuthModuleOptions;
+							  };
 					}) => {
 						const result = await configService.createAuthOptions();
 						return result.options || {};
@@ -380,8 +403,16 @@ export class AuthModule implements NestModule, OnModuleInit {
 					provide: AUTH_INSTANCE_KEY,
 					useFactory: async (configService: {
 						createAuthOptions():
-							| Promise<{ auth: any; options?: AuthModuleOptions }>
-							| { auth: any; options?: AuthModuleOptions };
+							| Promise<{
+									// biome-ignore lint/suspicious/noExplicitAny: TODO replace with auth type
+									auth: any;
+									options?: AuthModuleOptions;
+							  }>
+							| {
+									// biome-ignore lint/suspicious/noExplicitAny: TODO replace with auth type
+									auth: any;
+									options?: AuthModuleOptions;
+							  };
 					}) => {
 						const result = await configService.createAuthOptions();
 						const auth = result.auth;
@@ -402,8 +433,16 @@ export class AuthModule implements NestModule, OnModuleInit {
 					provide: AUTH_MODULE_OPTIONS_KEY,
 					useFactory: async (configService: {
 						createAuthOptions():
-							| Promise<{ auth: any; options?: AuthModuleOptions }>
-							| { auth: any; options?: AuthModuleOptions };
+							| Promise<{
+									// biome-ignore lint/suspicious/noExplicitAny: TODO replace with auth type
+									auth: any;
+									options?: AuthModuleOptions;
+							  }>
+							| {
+									// biome-ignore lint/suspicious/noExplicitAny: TODO replace with auth type
+									auth: any;
+									options?: AuthModuleOptions;
+							  };
 					}) => {
 						const result = await configService.createAuthOptions();
 						return result.options || {};
