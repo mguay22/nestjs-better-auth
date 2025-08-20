@@ -15,7 +15,6 @@ import {
 	HttpAdapterHost,
 	MetadataScanner,
 } from "@nestjs/core";
-import type { Auth } from "better-auth";
 import { toNodeHandler } from "better-auth/node";
 import { createAuthMiddleware } from "better-auth/plugins";
 import type { Request, Response } from "express";
@@ -42,18 +41,18 @@ type AuthModuleOptions = {
 /**
  * Factory for creating Auth instance and module options asynchronously
  */
-export interface AuthModuleAsyncOptions
+export interface AuthModuleAsyncOptions<T = any>
 	extends Pick<ModuleMetadata, "imports"> {
 	/**
 	 * Factory function that returns an object with auth instance and optional module options
 	 */
 	useFactory: (...args: unknown[]) =>
 		| Promise<{
-				auth: Auth;
+				auth: T;
 				options?: AuthModuleOptions;
 		  }>
 		| {
-				auth: Auth;
+				auth: T;
 				options?: AuthModuleOptions;
 		  };
 	/**
@@ -66,11 +65,11 @@ export interface AuthModuleAsyncOptions
 	useClass?: Type<{
 		createAuthOptions():
 			| Promise<{
-					auth: Auth;
+					auth: T;
 					options?: AuthModuleOptions;
 			  }>
 			| {
-					auth: Auth;
+					auth: T;
 					options?: AuthModuleOptions;
 			  };
 	}>;
@@ -80,11 +79,11 @@ export interface AuthModuleAsyncOptions
 	useExisting?: Type<{
 		createAuthOptions():
 			| Promise<{
-					auth: Auth;
+					auth: T;
 					options?: AuthModuleOptions;
 			  }>
 			| {
-					auth: Auth;
+					auth: T;
 					options?: AuthModuleOptions;
 			  };
 	}>;
@@ -105,7 +104,7 @@ const HOOKS = [
 export class AuthModule implements NestModule, OnModuleInit {
 	private readonly logger = new Logger(AuthModule.name);
 	constructor(
-		@Inject(AUTH_INSTANCE_KEY) private readonly auth: Auth,
+		@Inject(AUTH_INSTANCE_KEY) private readonly auth: any,
 		@Inject(DiscoveryService)
 		private readonly discoveryService: DiscoveryService,
 		@Inject(MetadataScanner)
@@ -117,8 +116,9 @@ export class AuthModule implements NestModule, OnModuleInit {
 	) {}
 
 	onModuleInit(): void {
-		// Setup hooks
-		if (!this.auth.options.hooks) return;
+		// Setup hooks - handle both auth.hooks and auth.options.hooks for compatibility
+		const hooks = this.auth.hooks || this.auth.options?.hooks;
+		if (!hooks) return;
 
 		const providers = this.discoveryService
 			.getProviders()
@@ -191,14 +191,16 @@ export class AuthModule implements NestModule, OnModuleInit {
 		providerMethod: (...args: unknown[]) => unknown,
 		providerClass: { new (...args: unknown[]): unknown },
 	) {
-		if (!this.auth.options.hooks) return;
+		// Handle both auth.hooks and auth.options.hooks for compatibility
+		const hooks = this.auth.hooks || this.auth.options?.hooks;
+		if (!hooks) return;
 
 		for (const { metadataKey, hookType } of HOOKS) {
 			const hookPath = Reflect.getMetadata(metadataKey, providerMethod);
 			if (!hookPath) continue;
 
-			const originalHook = this.auth.options.hooks[hookType];
-			this.auth.options.hooks[hookType] = createAuthMiddleware(async (ctx) => {
+			const originalHook = hooks[hookType];
+			hooks[hookType] = createAuthMiddleware(async (ctx) => {
 				if (originalHook) {
 					await originalHook(ctx);
 				}
@@ -215,13 +217,18 @@ export class AuthModule implements NestModule, OnModuleInit {
 	 * @param auth - The Auth instance to use
 	 * @param options - Configuration options for the module
 	 */
-	static forRoot(auth: Auth, options: AuthModuleOptions = {}): DynamicModule {
+	static forRoot<T = any>(
+		auth: T,
+		options: AuthModuleOptions = {},
+	): DynamicModule {
 		// Initialize hooks with an empty object if undefined
-		// Without this initialization, the setupHook method won't be able to properly override hooks
-		// It won't throw an error, but any hook functions we try to add won't be called
-		auth.options.hooks = {
-			...auth.options.hooks,
-		};
+		// Handle both auth.hooks and auth.options.hooks for compatibility
+		const authAny = auth as any;
+		if (authAny.hooks !== undefined) {
+			authAny.hooks = { ...authAny.hooks };
+		} else if (authAny.options) {
+			authAny.options.hooks = { ...authAny.options.hooks };
+		}
 
 		const providers: Provider[] = [
 			{
@@ -264,7 +271,9 @@ export class AuthModule implements NestModule, OnModuleInit {
 	 * Static factory method to create and configure the AuthModule asynchronously.
 	 * @param options - Async configuration options for the module
 	 */
-	static forRootAsync(options: AuthModuleAsyncOptions): {
+	static forRootAsync<T = any>(
+		options: AuthModuleAsyncOptions<T>,
+	): {
 		global: boolean;
 		module: typeof AuthModule;
 		imports?: ModuleMetadata["imports"];
@@ -292,8 +301,8 @@ export class AuthModule implements NestModule, OnModuleInit {
 		};
 	}
 
-	private static createAsyncProviders(
-		options: AuthModuleAsyncOptions,
+	private static createAsyncProviders<T = any>(
+		options: AuthModuleAsyncOptions<T>,
 	): Provider[] {
 		if (options.useFactory) {
 			return [
@@ -304,9 +313,13 @@ export class AuthModule implements NestModule, OnModuleInit {
 						const auth = result.auth;
 
 						// Initialize hooks with an empty object if undefined
-						auth.options.hooks = {
-							...auth.options.hooks,
-						};
+						// Handle both auth.hooks and auth.options.hooks for compatibility
+						const authAny = auth as any;
+						if (authAny.hooks !== undefined) {
+							authAny.hooks = { ...authAny.hooks };
+						} else if (authAny.options) {
+							authAny.options.hooks = { ...authAny.options.hooks };
+						}
 
 						return auth;
 					},
@@ -334,16 +347,20 @@ export class AuthModule implements NestModule, OnModuleInit {
 					provide: AUTH_INSTANCE_KEY,
 					useFactory: async (configService: {
 						createAuthOptions():
-							| Promise<{ auth: Auth; options?: AuthModuleOptions }>
-							| { auth: Auth; options?: AuthModuleOptions };
+							| Promise<{ auth: any; options?: AuthModuleOptions }>
+							| { auth: any; options?: AuthModuleOptions };
 					}) => {
 						const result = await configService.createAuthOptions();
 						const auth = result.auth;
 
 						// Initialize hooks with an empty object if undefined
-						auth.options.hooks = {
-							...auth.options.hooks,
-						};
+						// Handle both auth.hooks and auth.options.hooks for compatibility
+						const authAny = auth as any;
+						if (authAny.hooks !== undefined) {
+							authAny.hooks = { ...authAny.hooks };
+						} else if (authAny.options) {
+							authAny.options.hooks = { ...authAny.options.hooks };
+						}
 
 						return auth;
 					},
@@ -353,8 +370,8 @@ export class AuthModule implements NestModule, OnModuleInit {
 					provide: AUTH_MODULE_OPTIONS_KEY,
 					useFactory: async (configService: {
 						createAuthOptions():
-							| Promise<{ auth: Auth; options?: AuthModuleOptions }>
-							| { auth: Auth; options?: AuthModuleOptions };
+							| Promise<{ auth: any; options?: AuthModuleOptions }>
+							| { auth: any; options?: AuthModuleOptions };
 					}) => {
 						const result = await configService.createAuthOptions();
 						return result.options || {};
@@ -371,16 +388,20 @@ export class AuthModule implements NestModule, OnModuleInit {
 					provide: AUTH_INSTANCE_KEY,
 					useFactory: async (configService: {
 						createAuthOptions():
-							| Promise<{ auth: Auth; options?: AuthModuleOptions }>
-							| { auth: Auth; options?: AuthModuleOptions };
+							| Promise<{ auth: any; options?: AuthModuleOptions }>
+							| { auth: any; options?: AuthModuleOptions };
 					}) => {
 						const result = await configService.createAuthOptions();
 						const auth = result.auth;
 
 						// Initialize hooks with an empty object if undefined
-						auth.options.hooks = {
-							...auth.options.hooks,
-						};
+						// Handle both auth.hooks and auth.options.hooks for compatibility
+						const authAny = auth as any;
+						if (authAny.hooks !== undefined) {
+							authAny.hooks = { ...authAny.hooks };
+						} else if (authAny.options) {
+							authAny.options.hooks = { ...authAny.options.hooks };
+						}
 
 						return auth;
 					},
@@ -390,8 +411,8 @@ export class AuthModule implements NestModule, OnModuleInit {
 					provide: AUTH_MODULE_OPTIONS_KEY,
 					useFactory: async (configService: {
 						createAuthOptions():
-							| Promise<{ auth: Auth; options?: AuthModuleOptions }>
-							| { auth: Auth; options?: AuthModuleOptions };
+							| Promise<{ auth: any; options?: AuthModuleOptions }>
+							| { auth: any; options?: AuthModuleOptions };
 					}) => {
 						const result = await configService.createAuthOptions();
 						return result.options || {};
