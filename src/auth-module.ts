@@ -41,18 +41,18 @@ type AuthModuleOptions = {
 /**
  * Factory for creating Auth instance and module options asynchronously
  */
-export interface AuthModuleAsyncOptions<T = any>
+export interface AuthModuleAsyncOptions
 	extends Pick<ModuleMetadata, "imports"> {
 	/**
 	 * Factory function that returns an object with auth instance and optional module options
 	 */
 	useFactory: (...args: unknown[]) =>
 		| Promise<{
-				auth: T;
+				auth: any;
 				options?: AuthModuleOptions;
 		  }>
 		| {
-				auth: T;
+				auth: any;
 				options?: AuthModuleOptions;
 		  };
 	/**
@@ -65,11 +65,11 @@ export interface AuthModuleAsyncOptions<T = any>
 	useClass?: Type<{
 		createAuthOptions():
 			| Promise<{
-					auth: T;
+					auth: any;
 					options?: AuthModuleOptions;
 			  }>
 			| {
-					auth: T;
+					auth: any;
 					options?: AuthModuleOptions;
 			  };
 	}>;
@@ -79,11 +79,11 @@ export interface AuthModuleAsyncOptions<T = any>
 	useExisting?: Type<{
 		createAuthOptions():
 			| Promise<{
-					auth: T;
+					auth: any;
 					options?: AuthModuleOptions;
 			  }>
 			| {
-					auth: T;
+					auth: any;
 					options?: AuthModuleOptions;
 			  };
 	}>;
@@ -217,17 +217,13 @@ export class AuthModule implements NestModule, OnModuleInit {
 	 * @param auth - The Auth instance to use
 	 * @param options - Configuration options for the module
 	 */
-	static forRoot<T = any>(
-		auth: T,
-		options: AuthModuleOptions = {},
-	): DynamicModule {
+	static forRoot(auth: any, options: AuthModuleOptions = {}): DynamicModule {
 		// Initialize hooks with an empty object if undefined
 		// Handle both auth.hooks and auth.options.hooks for compatibility
-		const authAny = auth as any;
-		if (authAny.hooks !== undefined) {
-			authAny.hooks = { ...authAny.hooks };
-		} else if (authAny.options) {
-			authAny.options.hooks = { ...authAny.options.hooks };
+		if (auth.hooks !== undefined) {
+			auth.hooks = { ...auth.hooks };
+		} else if (auth.options) {
+			auth.options.hooks = { ...auth.options.hooks };
 		}
 
 		const providers: Provider[] = [
@@ -271,9 +267,7 @@ export class AuthModule implements NestModule, OnModuleInit {
 	 * Static factory method to create and configure the AuthModule asynchronously.
 	 * @param options - Async configuration options for the module
 	 */
-	static forRootAsync<T = any>(
-		options: AuthModuleAsyncOptions<T>,
-	): {
+	static forRootAsync(options: AuthModuleAsyncOptions): {
 		global: boolean;
 		module: typeof AuthModule;
 		imports?: ModuleMetadata["imports"];
@@ -301,8 +295,8 @@ export class AuthModule implements NestModule, OnModuleInit {
 		};
 	}
 
-	private static createAsyncProviders<T = any>(
-		options: AuthModuleAsyncOptions<T>,
+	private static createAsyncProviders(
+		options: AuthModuleAsyncOptions,
 	): Provider[] {
 		if (options.useFactory) {
 			return [
@@ -314,11 +308,10 @@ export class AuthModule implements NestModule, OnModuleInit {
 
 						// Initialize hooks with an empty object if undefined
 						// Handle both auth.hooks and auth.options.hooks for compatibility
-						const authAny = auth as any;
-						if (authAny.hooks !== undefined) {
-							authAny.hooks = { ...authAny.hooks };
-						} else if (authAny.options) {
-							authAny.options.hooks = { ...authAny.options.hooks };
+						if (auth.hooks !== undefined) {
+							auth.hooks = { ...auth.hooks };
+						} else if (auth.options) {
+							auth.options.hooks = { ...auth.options.hooks };
 						}
 
 						return auth;
@@ -355,11 +348,10 @@ export class AuthModule implements NestModule, OnModuleInit {
 
 						// Initialize hooks with an empty object if undefined
 						// Handle both auth.hooks and auth.options.hooks for compatibility
-						const authAny = auth as any;
-						if (authAny.hooks !== undefined) {
-							authAny.hooks = { ...authAny.hooks };
-						} else if (authAny.options) {
-							authAny.options.hooks = { ...authAny.options.hooks };
+						if (auth.hooks !== undefined) {
+							auth.hooks = { ...auth.hooks };
+						} else if (auth.options) {
+							auth.options.hooks = { ...auth.options.hooks };
 						}
 
 						return auth;
@@ -396,11 +388,10 @@ export class AuthModule implements NestModule, OnModuleInit {
 
 						// Initialize hooks with an empty object if undefined
 						// Handle both auth.hooks and auth.options.hooks for compatibility
-						const authAny = auth as any;
-						if (authAny.hooks !== undefined) {
-							authAny.hooks = { ...authAny.hooks };
-						} else if (authAny.options) {
-							authAny.options.hooks = { ...authAny.options.hooks };
+						if (auth.hooks !== undefined) {
+							auth.hooks = { ...auth.hooks };
+						} else if (auth.options) {
+							auth.options.hooks = { ...auth.options.hooks };
 						}
 
 						return auth;
