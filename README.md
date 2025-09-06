@@ -6,6 +6,9 @@ A comprehensive NestJS integration library for [Better Auth](https://www.better-
 
 Install the library in your NestJS project:
 
+> [!WARNING]  
+> Install the latest `better-auth` package. If you hit 404s after updates, remove `node_modules` and your lockfile, then reinstall. Context: [#20](https://github.com/ThallesP/nestjs-better-auth/issues/20).
+
 ```bash
 # Using npm
 npm install @thallesp/nestjs-better-auth
@@ -48,7 +51,7 @@ bootstrap();
 ```
 
 > [!WARNING]  
-> Currently, Better Auth's NestJS integration **only supports Express** and does not work with Fastify.
+> Currently the library has beta support for Fastify, if you experience any issues with it, please open an issue.
 
 **2. Import AuthModule**
 
